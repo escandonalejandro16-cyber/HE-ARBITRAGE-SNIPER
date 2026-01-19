@@ -9,5 +9,11 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "type": "commonjs"
+  "type": "commonjs",
+  "dependencies": {
+    "ioredis": "^5.9.2",
+    "socket.io": "^4.8.3",
+    "ws": "^8.19.0",
+    "zeromq": "^6.5.0"
+  }
 }
