@@ -1,14 +1,9 @@
 class OrderBook:
     def __init__(self):
-        self.price = None
-        self.exchange = None
+        self.prices = {}
 
     def update(self, tick):
-        self.price = tick.get("price")
-        self.exchange = tick.get("exchange")
+        self.prices[tick["exchange"]] = tick["price"]
 
     def snapshot(self):
-        return {
-            "price": self.price,
-            "exchange": self.exchange
-        }
+        return dict(self.prices)
