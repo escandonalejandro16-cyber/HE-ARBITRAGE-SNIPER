@@ -1,3 +1,5 @@
 pyzmq
 redis
 uvloop; platform_system != "Windows"
+fastapi 
+uvicorn

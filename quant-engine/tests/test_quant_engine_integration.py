@@ -3,6 +3,12 @@ import unittest
 import zmq
 import threading
 import time
+import sys
+import os
+
+# Agregar src al path para importar módulos
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
+
 from redis_pub import RedisPublisher
 from orderbook import OrderBook
 from strategy import StrategyEngine
