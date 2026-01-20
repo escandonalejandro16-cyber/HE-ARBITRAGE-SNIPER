@@ -1,6 +1,6 @@
 # config.py
 
-ZMQ_ADDRESS = "tcp://0.0.0.0:5555"
+ZMQ_ADDRESS = "tcp://127.0.0.1:5555"
 REDIS_HOST = "localhost"
 REDIS_PORT = 6379
 REDIS_CHANNEL = "signals"

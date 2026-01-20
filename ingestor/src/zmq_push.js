@@ -9,9 +9,18 @@ export class ZMQPush {
   }
 
   async connect() {
-    await this.socket.connect(this.address);
-    console.log("🟢 ZMQ PUSH conectado:", this.address);
-    this.startSender();
+    try {
+      await this.socket.connect(this.address);
+      console.log("🟢 ZMQ PUSH conectado:", this.address);
+      
+      // Pequeña pausa para asegurar que el receptor esté listo
+      await new Promise(r => setTimeout(r, 500));
+      
+      this.startSender();
+    } catch (err) {
+      console.error("❌ Error conectando ZMQ:", err.message);
+      process.exit(1);
+    }
   }
 
   send(tick) {
@@ -24,15 +33,18 @@ export class ZMQPush {
 
     while (true) {
       if (this.queue.length === 0) {
-        await new Promise(r => setTimeout(r, 1));
+        await new Promise(r => setTimeout(r, 10));
         continue;
       }
 
       const tick = this.queue.shift();
       try {
         await this.socket.send(JSON.stringify(tick));
+        console.log("📤 Tick enviado:", tick.exchange, tick.price);
       } catch (err) {
-        console.error("ZMQ send error:", err.message);
+        console.error("❌ ZMQ send error:", err.message);
+        this.queue.unshift(tick); // Reintenta
+        await new Promise(r => setTimeout(r, 100));
       }
     }
   }

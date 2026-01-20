@@ -1,6 +1,7 @@
 # main.py
 import asyncio
 import logging
+import signal
 
 from config import (
     ZMQ_ADDRESS,
@@ -13,24 +14,33 @@ from orderbook import OrderBook
 from strategy import StrategyEngine
 from redis_pub import RedisPublisher
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger("quant-engine")
 
 
 async def quant_engine_loop(queue, orderbook, strategy, redis_pub):
     while True:
-        tick = await queue.get()
+        try:
+            tick = await asyncio.wait_for(queue.get(), timeout=5.0)
+            
+            orderbook.update(tick)
+            prices = orderbook.snapshot()
+            logger.debug(f"OrderBook snapshot: {prices}")
 
-        orderbook.update(tick)
-        prices = orderbook.snapshot()
-
-        signal = strategy.evaluate(prices)
-        if signal:
-            redis_pub.publish(REDIS_CHANNEL, signal)
-            logger.info(f"Signal emitted: {signal}")
+            signal = strategy.evaluate(prices)
+            if signal:
+                redis_pub.publish(REDIS_CHANNEL, signal)
+                logger.info(f"✅ Signal emitted: {signal}")
+        except asyncio.TimeoutError:
+            logger.debug("⏱️ Cola vacía, esperando ticks...")
+        except Exception as e:
+            logger.error(f"❌ Error en engine loop: {e}")
+            await asyncio.sleep(1)
 
 
 async def main():
+    logger.info("🚀 Iniciando Quant Engine...")
+    
     queue = asyncio.Queue(maxsize=10_000)
 
     orderbook = OrderBook()
@@ -47,11 +57,19 @@ async def main():
         quant_engine_loop(queue, orderbook, strategy, redis_pub)
     )
 
-    await asyncio.gather(listener_task, engine_task)
+    try:
+        await asyncio.gather(listener_task, engine_task)
+    except KeyboardInterrupt:
+        logger.info("🛑 Quant Engine shutdown")
+        listener_task.cancel()
+        engine_task.cancel()
+        zmq_listener.close()
 
 
 if __name__ == "__main__":
     try:
         asyncio.run(main())
     except KeyboardInterrupt:
-        logger.info("Quant Engine shutdown")
+        logger.info("🛑 Quant Engine shutdown")
+    except Exception as e:
+        logger.error(f"❌ Error fatal: {e}")
