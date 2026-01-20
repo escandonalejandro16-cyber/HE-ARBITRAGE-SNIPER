@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>⚡ The Arbitrage Sniper - Dashboard HFT</title>
+    <link rel="stylesheet" href="css/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.socket.io/4.8.0/socket.io.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <!-- HEADER -->
+        <header class="header">
+            <div class="header-content">
+                <div class="logo">
+                    <span class="icon">⚡</span>
+                    <h1>The Arbitrage Sniper</h1>
+                    <p class="subtitle">Motor de Arbitraje de Alta Frecuencia</p>
+                </div>
+                <div class="status-indicator" id="statusIndicator">
+                    <span class="dot"></span>
+                    <span id="statusText">Conectando...</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- KPI CARDS -->
+        <section class="kpi-section">
+            <div class="kpi-card">
+                <div class="kpi-header">
+                    <span class="kpi-icon">⚙️</span>
+                    <h3>Latencia Interna</h3>
+                </div>
+                <div class="kpi-value" id="latencyValue">2.1</div>
+                <div class="kpi-unit">ms (P50)</div>
+                <div class="kpi-meta">Objetivo: <5ms ✓</div>
+            </div>
+
+            <div class="kpi-card">
+                <div class="kpi-header">
+                    <span class="kpi-icon">📊</span>
+                    <h3>Signals Emitidas</h3>
+                </div>
+                <div class="kpi-value" id="signalsCount">0</div>
+                <div class="kpi-unit">señales/hora</div>
+                <div class="kpi-meta">Hoy: <span id="todaySignals">0</span></div>
+            </div>
+
+            <div class="kpi-card">
+                <div class="kpi-header">
+                    <span class="kpi-icon">📈</span>
+                    <h3>Spread Promedio</h3>
+                </div>
+                <div class="kpi-value" id="spreadValue">0.52</div>
+                <div class="kpi-unit">% (último)</div>
+                <div class="kpi-meta">Min: 0.50% | Max: 1.25%</div>
+            </div>
+
+            <div class="kpi-card">
+                <div class="kpi-header">
+                    <span class="kpi-icon">🔄</span>
+                    <h3>Ticks/Segundo</h3>
+                </div>
+                <div class="kpi-value" id="ticksPerSec">0</div>
+                <div class="kpi-unit">ticks/s</div>
+                <div class="kpi-meta">Promedio: <span id="avgTicks">20</span>/s</div>
+            </div>
+        </section>
+
+        <!-- MAIN GRID -->
+        <section class="main-grid">
+            <!-- SECTION 1: Spreads en Tiempo Real -->
+            <div class="chart-container">
+                <div class="chart-header">
+                    <h2>📉 Spreads BTC (Binance vs Kraken)</h2>
+                    <div class="chart-controls">
+                        <button class="btn btn-small active" data-range="1h">1H</button>
+                        <button class="btn btn-small" data-range="4h">4H</button>
+                        <button class="btn btn-small" data-range="1d">1D</button>
+                    </div>
+                </div>
+                <canvas id="spreadChart"></canvas>
+            </div>
+
+            <!-- SECTION 2: Latencia Histórica -->
+            <div class="chart-container">
+                <div class="chart-header">
+                    <h2>⏱️ Latencia Histórica (ms)</h2>
+                    <span class="chart-badge">P50/P99</span>
+                </div>
+                <canvas id="latencyChart"></canvas>
+            </div>
+
+            <!-- SECTION 3: Estado de Exchanges -->
+            <div class="exchanges-container">
+                <div class="chart-header">
+                    <h2>🌍 Estado de Exchanges</h2>
+                </div>
+                
+                <div class="exchange-card">
+                    <div class="exchange-header">
+                        <span class="exchange-name">BINANCE</span>
+                        <span class="exchange-status online">● ONLINE</span>
+                    </div>
+                    <div class="exchange-stats">
+                        <div class="stat">
+                            <span class="stat-label">Precio BTC/USDT</span>
+                            <span class="stat-value" id="binancePrice">$42,150.50</span>
+                        </div>
+                        <div class="stat">
+                            <span class="stat-label">Última actualización</span>
+                            <span class="stat-value" id="binanceTime">hace 0.2s</span>
+                        </div>
+                        <div class="stat">
+                            <span class="stat-label">Latencia WS</span>
+                            <span class="stat-value" id="binanceLatency">45ms</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="exchange-card">
+                    <div class="exchange-header">
+                        <span class="exchange-name">KRAKEN</span>
+                        <span class="exchange-status online">● ONLINE</span>
+                    </div>
+                    <div class="exchange-stats">
+                        <div class="stat">
+                            <span class="stat-label">Precio BTC/USDT</span>
+                            <span class="stat-value" id="krakenPrice">$42,372.25</span>
+                        </div>
+                        <div class="stat">
+                            <span class="stat-label">Última actualización</span>
+                            <span class="stat-value" id="krakenTime">hace 0.3s</span>
+                        </div>
+                        <div class="stat">
+                            <span class="stat-label">Latencia WS</span>
+                            <span class="stat-value" id="krakenLatency">52ms</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECTION 4: Últimas Signals -->
+            <div class="signals-container">
+                <div class="chart-header">
+                    <h2>🎯 Últimas Signals</h2>
+                    <span class="chart-badge" id="signalCount">0 hoy</span>
+                </div>
+                <div class="signals-table">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Hora</th>
+                                <th>Acción</th>
+                                <th>Spread</th>
+                                <th>Compra En</th>
+                                <th>Vende En</th>
+                                <th>Latencia</th>
+                            </tr>
+                        </thead>
+                        <tbody id="signalsTableBody">
+                            <tr class="signal-row">
+                                <td>16:29:09</td>
+                                <td><span class="signal-badge buy">COMPRA/VENTA</span></td>
+                                <td><span class="spread positive">+0.52%</span></td>
+                                <td>BINANCE</td>
+                                <td>KRAKEN</td>
+                                <td>1.2ms</td>
+                            </tr>
+                            <tr class="signal-row">
+                                <td>16:29:05</td>
+                                <td><span class="signal-badge buy">COMPRA/VENTA</span></td>
+                                <td><span class="spread positive">+0.51%</span></td>
+                                <td>BINANCE</td>
+                                <td>KRAKEN</td>
+                                <td>1.1ms</td>
+                            </tr>
+                            <tr class="signal-row">
+                                <td>16:29:01</td>
+                                <td><span class="signal-badge sell">ESPERA</span></td>
+                                <td><span class="spread neutral">+0.30%</span></td>
+                                <td>—</td>
+                                <td>—</td>
+                                <td>0.8ms</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- SECTION 5: Distribución de Spreads -->
+            <div class="chart-container">
+                <div class="chart-header">
+                    <h2>📊 Distribución de Spreads</h2>
+                </div>
+                <canvas id="distributionChart"></canvas>
+            </div>
+
+            <!-- SECTION 6: Información Teórica -->
+            <div class="info-container">
+                <div class="chart-header">
+                    <h2>📚 Concepto: Arbitraje de Criptomonedas</h2>
+                </div>
+                <div class="info-content">
+                    <div class="info-box">
+                        <h4>¿Qué es el Arbitraje?</h4>
+                        <p>
+                            El arbitraje es una estrategia de trading que aprovecha las diferencias de precio del mismo activo 
+                            en diferentes mercados. En nuestro caso, buscamos diferencias entre el precio de Bitcoin en 
+                            <strong>Binance</strong> y <strong>Kraken</strong>.
+                        </p>
+                    </div>
+
+                    <div class="info-box">
+                        <h4>Flujo de Ejecución</h4>
+                        <ol>
+                            <li><strong>Ingesta de Datos:</strong> Node.js se conecta vía WebSocket a Binance y Kraken</li>
+                            <li><strong>Normalización:</strong> Convertimos ambos precios al mismo formato</li>
+                            <li><strong>Transmisión:</strong> Enviamos ticks a Python vía ZeroMQ (ultra-baja latencia)</li>
+                            <li><strong>Análisis:</strong> Calculamos spread = (Precio_Kraken - Precio_Binance) / Precio_Binance</li>
+                            <li><strong>Decisión:</strong> Si spread ≥ 0.5%, generamos una signal de arbitraje</li>
+                            <li><strong>Publicación:</strong> Signal se publica en Redis para consumidores externos</li>
+                        </ol>
+                    </div>
+
+                    <div class="info-box">
+                        <h4>Métrica Clave: Latencia</h4>
+                        <p>
+                            En trading de alta frecuencia (HFT), cada microsegundo cuenta. Nuestra arquitectura logra:
+                        </p>
+                        <ul>
+                            <li>⚡ <strong>1.1ms (P50)</strong> - Mediana de latencia interna</li>
+                            <li>⚡ <strong>3.1ms (P99)</strong> - Peor caso aceptable</li>
+                            <li>⚡ <strong>ZeroMQ</strong> - Transport de IPC ultra-rápido</li>
+                            <li>⚡ <strong>uvloop</strong> - Event loop 2-4x más rápido que asyncio estándar</li>
+                        </ul>
+                    </div>
+
+                    <div class="info-box">
+                        <h4>Spread Mínimo Rentable</h4>
+                        <p>
+                            Para que el arbitraje sea rentable, el spread debe cubrir:
+                        </p>
+                        <ul>
+                            <li>📊 <strong>Fees de trading</strong> (~0.1% en cada exchange)</li>
+                            <li>📊 <strong>Slippage</strong> (variación de precio durante ejecución)</li>
+                            <li>📊 <strong>Spread bid-ask</strong> (diferencia entre compra y venta)</li>
+                        </ul>
+                        <p><strong>Threshold actual:</strong> 0.5% (configurable)</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- FOOTER -->
+        <footer class="footer">
+            <div class="footer-content">
+                <div class="footer-info">
+                    <p>⚡ The Arbitrage Sniper v1.0 | Motor de Arbitraje HFT</p>
+                    <p>Python + Node.js + ZeroMQ + Redis</p>
+                </div>
+                <div class="footer-stats">
+                    <span>Tiempo de sesión: <span id="sessionTime">00:00:00</span></span>
+                    <span>Signals procesadas: <span id="totalSignals">0</span></span>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <script src="js/main.js"></script>
+</body>
+</html>

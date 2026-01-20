@@ -15,6 +15,8 @@ services:
       retries: 5
     volumes:
       - redis_data:/data
+    networks:
+      - arbitrage-net
 
   # Node.js Ingestor - Binance + Kraken WebSocket → ZMQ
   ingestor:
@@ -39,11 +41,32 @@ services:
     container_name: arbitrage-quant-engine
     environment:
       - PYTHONUNBUFFERED=1
+      - REDIS_HOST=redis
+      - ZMQ_ADDRESS=tcp://ingestor:5555
     depends_on:
       redis:
         condition: service_healthy
       ingestor:
         condition: service_started
+    networks:
+      - arbitrage-net
+    restart: unless-stopped
+
+  # Node.js Frontend - Dashboard web
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: arbitrage-frontend
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - REDIS_HOST=redis
+    ports:
+      - "3000:3000"
+    depends_on:
+      - redis
+      - quant-engine
     networks:
       - arbitrage-net
     restart: unless-stopped
@@ -55,3 +78,4 @@ networks:
 volumes:
   redis_data:
     driver: local
+
