@@ -8,8 +8,8 @@ import os
 # Agregar src al path para importar módulos
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 
-from orderbook import OrderBook
-from strategy import StrategyEngine
+from ..src.orderbook import OrderBook
+from ..src.strategy import StrategyEngine
 
 class DummyRedisPublisher:
     """Mock de RedisPublisher con timestamps"""

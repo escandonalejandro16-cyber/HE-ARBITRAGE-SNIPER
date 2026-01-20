@@ -1,6 +1,19 @@
+import logging
+
+logger = logging.getLogger("strategy")
+
 class StrategyEngine:
-    def evaluate(self, prices: dict, threshold=0.005):
+    def __init__(self):
+        self.evaluation_count = 0
+        self.signal_count = 0
+    
+    def evaluate(self, prices: dict, orderbook_source=None, threshold=0.005):
+        """Evaluar strategy y rastrear origen de datos"""
+        self.evaluation_count += 1
+        
         if len(prices) < 2:
+            exchanges = list(prices.keys()) if prices else []
+            logger.warning(f"⚠️ [STRATEGY EVAL #{self.evaluation_count}] Esperando 2 exchanges, tengo {len(prices)}: {exchanges}")
             return None
 
         exchanges = list(prices.keys())
@@ -10,12 +23,20 @@ class StrategyEngine:
         price_b = prices[b]
 
         spread = (price_b - price_a) / price_a
+        
+        logger.debug(f"📈 [STRATEGY EVAL #{self.evaluation_count}] Comparando {a}=${price_a} vs {b}=${price_b}, Spread={spread*100:.4f}%")
 
         if abs(spread) >= threshold:
-            return {
+            self.signal_count += 1
+            signal = {
                 "buy": a if price_a < price_b else b,
                 "sell": b if price_a < price_b else a,
-                "spread": round(spread * 100, 4)
+                "spread": round(spread * 100, 4),
+                "_signal_number": self.signal_count,
+                "_from_orderbook_source": orderbook_source,
+                "_evaluation_number": self.evaluation_count
             }
-
+            logger.info(f"🎯 [SIGNAL GENERADA #{self.signal_count}] COMPRAR en {signal['buy']} VENDER en {signal['sell']}, Spread={signal['spread']}%")
+            return signal
+        
         return None

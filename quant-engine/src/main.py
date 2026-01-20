@@ -32,18 +32,36 @@ logger = logging.getLogger("quant-engine")
 
 
 async def quant_engine_loop(queue, orderbook, strategy, redis_pub):
+    """Loop principal: ZMQ → Queue → OrderBook → Strategy → Redis → WebSocket"""
     while True:
         try:
             tick = await asyncio.wait_for(queue.get(), timeout=5.0)
             
+            # 1. Datos llegan de la queue (vinieron de ZMQ)
+            source = tick.get("_source", "UNKNOWN")
+            address = tick.get("_address", "UNKNOWN")
+            logger.info(f"1️⃣ [QUEUE] Tick sacado - Origen: {source} ({address})")
+            
+            # 2. Se actualizan en OrderBook
             orderbook.update(tick)
+            logger.info(f"2️⃣ [ORDERBOOK] Datos almacenados")
+            
+            # 3. Se obtiene snapshot de OrderBook
             prices = orderbook.snapshot()
-            logger.debug(f"OrderBook snapshot: {prices}")
+            logger.info(f"📊 [SNAPSHOT] Precios: {list(prices.keys())} exchanges")
+            logger.debug(f"   Detalle: {orderbook.get_all_with_sources()}")
 
+            # 4. Se evalúa la estrategia
             signal = strategy.evaluate(prices)
+            
+            # 5. Si hay señal, se publica a Redis → WebSocket → Frontend
             if signal:
+                logger.info(f"✅ [SIGNAL] Señal detectada: buy={signal['buy']}, sell={signal['sell']}, spread={signal['spread']}%")
                 redis_pub.publish(REDIS_CHANNEL, signal)
-                logger.info(f"✅ Signal emitted: {signal}")
+                logger.info(f"🔴 [REDIS] Publicado → WebSocket → Frontend")
+            else:
+                logger.debug(f"⏭️ [NO SIGNAL] Spread insuficiente")
+                    
         except asyncio.TimeoutError:
             logger.debug("⏱️ Cola vacía, esperando ticks...")
         except Exception as e:
@@ -53,6 +71,7 @@ async def quant_engine_loop(queue, orderbook, strategy, redis_pub):
 
 async def main():
     logger.info("🚀 Iniciando Quant Engine...")
+    logger.info("📡 Flujo: Ingestor (ZMQ) → Quant-Engine → Redis → WebSocket Server → Frontend")
     
     queue = asyncio.Queue(maxsize=10_000)
 

@@ -21,7 +21,10 @@ class ZMQPullListener:
         while True:
             try:
                 tick = await loop.run_in_executor(None, self.socket.recv_json)
-                logger.debug(f"📨 Tick recibido: {tick}")
+                # ✅ Marcar origen del dato
+                tick["_source"] = "ZMQ_LISTENER"
+                tick["_address"] = self.address
+                logger.info(f"📨 [ORIGEN: ZMQ] {tick.get('exchange')} @ ${tick.get('price')} desde {self.address}")
                 await queue.put(tick)
             except zmq.Again:
                 # Timeout - continúa sin bloquear

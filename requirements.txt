@@ -3,3 +3,5 @@ redis
 uvloop; platform_system != "Windows"
 fastapi 
 uvicorn
+httpx
+websockets
