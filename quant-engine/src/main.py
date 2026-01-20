@@ -2,6 +2,7 @@
 import asyncio
 import logging
 import signal
+import sys
 
 from config import (
     ZMQ_ADDRESS,
@@ -13,6 +14,18 @@ from zmq_pull import ZMQPullListener
 from orderbook import OrderBook
 from strategy import StrategyEngine
 from redis_pub import RedisPublisher
+
+# Intentar usar uvloop para mejor performance (no disponible en Windows)
+try:
+    import uvloop
+    asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
+    logger_setup = logging.getLogger("setup")
+    logger_setup.info("✅ uvloop activado (Linux/Docker)")
+except ImportError:
+    if sys.platform == "win32":
+        pass  # Windows no soporta uvloop
+    else:
+        logging.warning("⚠️ uvloop no disponible, usando event loop estándar")
 
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger("quant-engine")

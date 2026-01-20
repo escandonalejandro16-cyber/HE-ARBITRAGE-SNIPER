@@ -1,0 +1,57 @@
+version: "3.8"
+
+services:
+  # Redis - PUB/SUB y almacenamiento de signals
+  redis:
+    image: redis:7-alpine
+    container_name: arbitrage-redis
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    volumes:
+      - redis_data:/data
+
+  # Node.js Ingestor - Binance + Kraken WebSocket → ZMQ
+  ingestor:
+    build:
+      context: ./ingestor
+      dockerfile: Dockerfile
+    container_name: arbitrage-ingestor
+    environment:
+      - NODE_ENV=production
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - arbitrage-net
+    restart: unless-stopped
+
+  # Python Quant-Engine - ZMQ listener → Strategy → Redis publisher
+  quant-engine:
+    build:
+      context: ./quant-engine
+      dockerfile: Dockerfile
+    container_name: arbitrage-quant-engine
+    environment:
+      - PYTHONUNBUFFERED=1
+    depends_on:
+      redis:
+        condition: service_healthy
+      ingestor:
+        condition: service_started
+    networks:
+      - arbitrage-net
+    restart: unless-stopped
+
+networks:
+  arbitrage-net:
+    driver: bridge
+
+volumes:
+  redis_data:
+    driver: local
