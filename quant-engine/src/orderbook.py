@@ -17,7 +17,7 @@ class OrderBook:
         self.prices[exchange] = price
         self.sources[exchange] = {"source": source, "address": address}
         
-        logger.info(f"💾 [ORDERBOOK] {exchange} = ${price} (from {source} @ {address})")
+        logger.debug(f"💾 [ORDERBOOK] {exchange} = ${price} (from {source} @ {address})")
 
     def snapshot(self):
         """Retorna solo los precios"""

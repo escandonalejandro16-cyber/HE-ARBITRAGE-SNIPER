@@ -1,6 +1,3 @@
-// Conexión WebSocket
-const socket = new WebSocket('ws://localhost:8765');
-
 // Referencias al DOM
 const logTable = document.getElementById('log');
 const elTotalSignals = document.getElementById('total-signals');
@@ -14,19 +11,32 @@ let stats = {
     maxSpread: -Infinity
 };
 
-socket.onopen = () => {
-    console.log("✅ Conectado al WebSocket Bridge");
-};
+function connectWebSocket() {
+    const socket = new WebSocket('ws://localhost:8765');
 
-socket.onmessage = (event) => {
-    const data = JSON.parse(event.data);
-    
-    // 1. Actualizar Estadísticas
-    updateStats(data);
-    
-    // 2. Agregar fila a la tabla
-    addTableRow(data);
-};
+    socket.onopen = () => {
+        console.log("✅ Conectado al WebSocket Bridge");
+    };
+
+    socket.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        updateStats(data);
+        addTableRow(data);
+    };
+
+    socket.onclose = () => {
+        console.warn("⚠️ Conexión perdida. Reintentando en 3 segundos...");
+        setTimeout(connectWebSocket, 3000);
+    };
+
+    socket.onerror = (err) => {
+        console.error("❌ Error en WebSocket:", err);
+        socket.close();
+    };
+}
+
+// Iniciar conexión
+connectWebSocket();
 
 function updateStats(data) {
     const spread = parseFloat(data.spread);

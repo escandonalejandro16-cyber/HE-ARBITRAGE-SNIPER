@@ -16,8 +16,8 @@ class StrategyEngine:
             # --- MODO DEBUG: Simular KRAKEN si falta ---
             if len(prices) == 1 and "BINANCE" in prices:
                 binance_price = prices["BINANCE"]
-                # Simular precio de Kraken con una pequeña variación aleatoria (+/- 0.1%)
-                variation = random.uniform(-0.001, 0.001)
+                # Simular precio de Kraken con una variación mayor (+/- 1.0%) para forzar señales en demo
+                variation = random.uniform(-0.01, 0.01)
                 prices["KRAKEN"] = binance_price * (1 + variation)
                 logger.info(f"🧪 [DEBUG] No llega Kraken. Simulando precio: {prices['KRAKEN']:.2f}")
             else:

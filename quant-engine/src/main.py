@@ -9,6 +9,7 @@ from config import (
     REDIS_HOST,
     REDIS_PORT,
     REDIS_CHANNEL,
+    ARBITRAGE_THRESHOLD,
 )
 from zmq_pull import ZMQPullListener
 from orderbook import OrderBook
@@ -42,20 +43,20 @@ async def quant_engine_loop(queue, orderbook, strategy, redis_pub):
             # 1. Datos llegan de la queue (vinieron de ZMQ)
             source = tick.get("_source", "UNKNOWN")
             address = tick.get("_address", "UNKNOWN")
-            logger.info(f"1️⃣ [QUEUE] Tick sacado - Origen: {source} ({address})")
+            logger.debug(f"1️⃣ [QUEUE] Tick sacado - Origen: {source} ({address})")
             
             # 2. Se actualizan en OrderBook
             orderbook.update(tick)
-            logger.info(f"2️⃣ [ORDERBOOK] Datos almacenados")
+            logger.debug(f"2️⃣ [ORDERBOOK] Datos almacenados")
             
             # 3. Se obtiene snapshot de OrderBook
             prices = orderbook.snapshot()
-            logger.info(f"📊 [SNAPSHOT] Precios: {list(prices.keys())} exchanges")
+            logger.debug(f"📊 [SNAPSHOT] Precios: {list(prices.keys())} exchanges")
             logger.debug(f"   Detalle: {orderbook.get_all_with_sources()}")
 
             # 4. Se evalúa la estrategia
-            # Línea 47 modificada para pruebas
-            signal = strategy.evaluate(prices, threshold=-1.0)
+            # Usar umbral configurado para evitar inundación de señales
+            signal = strategy.evaluate(prices, threshold=ARBITRAGE_THRESHOLD)
             
             # 5. Si hay señal, se publica a Redis → WebSocket → Frontend
             if signal:

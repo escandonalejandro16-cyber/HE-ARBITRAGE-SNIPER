@@ -25,6 +25,9 @@ export class ZMQPush {
 
   send(tick) {
     this.queue.push(tick);
+    if (this.queue.length > 2000 && this.queue.length % 1000 === 0) {
+      console.warn(`⚠️ ALERTA: Cola ZMQ acumulando retraso (${this.queue.length} ticks pendientes)`);
+    }
   }
 
   async startSender() {
