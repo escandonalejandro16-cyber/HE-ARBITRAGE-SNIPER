@@ -27,7 +27,8 @@
     </table>
 
     <script>
-        const socket = new WebSocket('ws://localhost:8765');
+        const socket = new WebSocket('ws://127.0.0.1:8765');
+
         const log = document.getElementById('log');
 
         socket.onmessage = (event) => {
