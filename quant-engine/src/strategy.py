@@ -1,4 +1,5 @@
 import logging
+import random
 
 logger = logging.getLogger("strategy")
 
@@ -12,9 +13,17 @@ class StrategyEngine:
         self.evaluation_count += 1
         
         if len(prices) < 2:
-            exchanges = list(prices.keys()) if prices else []
-            logger.warning(f"⚠️ [STRATEGY EVAL #{self.evaluation_count}] Esperando 2 exchanges, tengo {len(prices)}: {exchanges}")
-            return None
+            # --- MODO DEBUG: Simular KRAKEN si falta ---
+            if len(prices) == 1 and "BINANCE" in prices:
+                binance_price = prices["BINANCE"]
+                # Simular precio de Kraken con una pequeña variación aleatoria (+/- 0.1%)
+                variation = random.uniform(-0.001, 0.001)
+                prices["KRAKEN"] = binance_price * (1 + variation)
+                logger.info(f"🧪 [DEBUG] No llega Kraken. Simulando precio: {prices['KRAKEN']:.2f}")
+            else:
+                exchanges = list(prices.keys()) if prices else []
+                logger.warning(f"⚠️ [STRATEGY EVAL #{self.evaluation_count}] Esperando 2 exchanges, tengo {len(prices)}: {exchanges}")
+                return None
 
         exchanges = list(prices.keys())
         a, b = exchanges[0], exchanges[1]

@@ -15,6 +15,10 @@ from orderbook import OrderBook
 from strategy import StrategyEngine
 from redis_pub import RedisPublisher
 
+# Configurar logging al inicio para evitar que se silencien los mensajes de INFO/DEBUG
+logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logger = logging.getLogger("quant-engine")
+
 # Intentar usar uvloop para mejor performance (no disponible en Windows)
 try:
     import uvloop
@@ -27,8 +31,6 @@ except ImportError:
     else:
         logging.warning("⚠️ uvloop no disponible, usando event loop estándar")
 
-logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-logger = logging.getLogger("quant-engine")
 
 
 async def quant_engine_loop(queue, orderbook, strategy, redis_pub):
