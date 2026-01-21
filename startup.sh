@@ -56,6 +56,7 @@ echo ""
 
 # Terminal 1: Redis (opcional, si tienes Redis instalado)
 log_info "1️⃣  Asegúrate de que Redis esté corriendo:"
+
 log_info "   redis-server (en otra terminal)"
 echo ""
 

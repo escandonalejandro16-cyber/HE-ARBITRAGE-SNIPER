@@ -52,7 +52,8 @@ async def quant_engine_loop(queue, orderbook, strategy, redis_pub):
             logger.debug(f"   Detalle: {orderbook.get_all_with_sources()}")
 
             # 4. Se evalúa la estrategia
-            signal = strategy.evaluate(prices)
+            # Línea 47 modificada para pruebas
+            signal = strategy.evaluate(prices, threshold=-1.0)
             
             # 5. Si hay señal, se publica a Redis → WebSocket → Frontend
             if signal:

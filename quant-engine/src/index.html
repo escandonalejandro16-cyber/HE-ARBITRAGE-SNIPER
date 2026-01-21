@@ -1,74 +1,46 @@
 <!DOCTYPE html>
-<html lang="es">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <title>Quant Engine Live Signals</title>
+    <title>Arbitrage Sniper Live</title>
     <style>
-        body { font-family: sans-serif; background: #121212; color: #e0e0e0; padding: 20px; }
-        #signals-container { max-height: 500px; overflow-y: auto; border: 1px solid #333; border-radius: 8px; }
-        table { width: 100%; border-collapse: collapse; }
-        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #333; }
-        th { background: #1f1f1f; position: sticky; top: 0; }
-        .buy { color: #00ff88; font-weight: bold; }
-        .sell { color: #ff4444; font-weight: bold; }
-        .signal-row { animation: fadeIn 0.5s; }
-        @keyframes fadeIn { from { opacity: 0; background: #2a2a2a; } to { opacity: 1; } }
+        body { background: #121212; color: white; font-family: sans-serif; padding: 20px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #333; padding: 10px; text-align: left; }
+        th { background: #1f1f1f; color: #888; }
+        .buy { color: #00ff88; }
+        .sell { color: #ff4444; }
+        .spread { font-weight: bold; color: #f0b90b; }
     </style>
 </head>
 <body>
     <h1>📡 Señales en Tiempo Real</h1>
-    <div id="status">Estado: <span id="ws-status" style="color: gray;">Conectando...</span></div>
-    <br>
-    <div id="signals-container">
-        <table id="signals-table">
-            <thead>
-                <tr>
-                    <th>Timestamp</th>
-                    <th>Compra (Buy)</th>
-                    <th>Venta (Sell)</th>
-                    <th>Spread %</th>
-                </tr>
-            </thead>
-            <tbody id="signals-body">
-                </tbody>
-        </table>
-    </div>
+    <table>
+        <thead>
+            <tr>
+                <th>Hora</th>
+                <th>Compra</th>
+                <th>Venta</th>
+                <th>Spread %</th>
+            </tr>
+        </thead>
+        <tbody id="log"></tbody>
+    </table>
 
     <script>
-        const statusSpan = document.getElementById('ws-status');
-        const signalsBody = document.getElementById('signals-body');
-        
-        // Conexión al servidor Python de WebSockets
-        const socket = new WebSocket('ws://localhost:8000/ws');
-
-        socket.onopen = () => {
-            statusSpan.innerText = "Conectado";
-            statusSpan.style.color = "#00ff88";
-        };
+        const socket = new WebSocket('ws://localhost:8765');
+        const log = document.getElementById('log');
 
         socket.onmessage = (event) => {
             const data = JSON.parse(event.data);
-            
-            // Crear nueva fila
-            const row = document.createElement('tr');
-            row.className = 'signal-row';
-            
-            const time = new Date().toLocaleTimeString();
-            
+            const row = log.insertRow(0); // Insertar al inicio
             row.innerHTML = `
-                <td>${time}</td>
+                <td>${new Date().toLocaleTimeString()}</td>
                 <td class="buy">${data.buy}</td>
                 <td class="sell">${data.sell}</td>
-                <td><strong>${data.spread}%</strong></td>
+                <td class="spread">${data.spread}%</td>
             `;
-
-            // Insertar al inicio para ver lo más reciente arriba
-            signalsBody.insertBefore(row, signalsBody.firstChild);
-        };
-
-        socket.onclose = () => {
-            statusSpan.innerText = "Desconectado";
-            statusSpan.style.color = "#ff4444";
+            // Mantener solo las últimas 15 señales
+            if (log.rows.length > 15) log.deleteRow(15);
         };
     </script>
 </body>
