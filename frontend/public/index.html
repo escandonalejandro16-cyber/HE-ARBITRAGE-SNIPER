@@ -4,42 +4,70 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Arbitrage Sniper Live</title>
+    <!-- Fuentes Futuristas -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="container">
-        <h1>📡 Panel de Arbitraje en Tiempo Real</h1>
-        
-        <!-- Sección de Estadísticas -->
-        <div class="stats-container">
-            <div class="stat-card">
-                <h3>Total Señales</h3>
-                <p id="total-signals">0</p>
-            </div>
-            <div class="stat-card">
-                <h3>Spread Promedio</h3>
-                <p id="avg-spread">0.00%</p>
-            </div>
-            <div class="stat-card">
-                <h3>Mejor Oportunidad</h3>
-                <p id="max-spread" class="highlight">0.00%</p>
-            </div>
-        </div>
+    <!-- Fondo Matrix Dinámico -->
+    <canvas id="matrix-bg"></canvas>
 
-        <!-- Tabla Principal -->
-        <div class="table-wrapper">
-            <table>
-                <thead>
-                    <tr>
-                        <th>Hora</th>
-                        <th>Compra (Low)</th>
-                        <th>Venta (High)</th>
-                        <th>Spread %</th>
-                        <th>Calidad</th>
-                    </tr>
-                </thead>
-                <tbody id="log"></tbody>
-            </table>
+    <!-- VISTA 1: LANDING PAGE -->
+    <div id="landing-view" class="view-container">
+        <div class="landing-content">
+            <h1 class="glitch-text" data-text="ARBITRAGE SNIPER">ARBITRAGE SNIPER</h1>
+            <p class="subtitle">SISTEMA DE DETECCIÓN DE ALTA FRECUENCIA <span class="highlight">BTC/USDT</span></p>
+            <p class="description">
+                Motor híbrido Node.js + Python optimizado con ZeroMQ.<br>
+                Latencia interna < 5ms. Ejecución simulada en tiempo real.
+            </p>
+            <button id="enter-btn" class="cyber-btn">
+                INICIAR SISTEMA <span class="btn-glare"></span>
+            </button>
+        </div>
+    </div>
+
+    <!-- VISTA 2: DASHBOARD (Oculto inicialmente) -->
+    <div id="dashboard-view" class="view-container hidden">
+        <div class="container">
+            <header>
+                <h2>📡 LIVE MONITORING</h2>
+                <button id="back-btn" class="small-btn">SALIR</button>
+            </header>
+            
+            <!-- Sección de Estadísticas 3D -->
+            <div class="stats-container">
+                <div class="stat-card tilt-card">
+                    <h3>Total Señales</h3>
+                    <p id="total-signals" class="glow-text">0</p>
+                </div>
+                <div class="stat-card tilt-card">
+                    <h3>Spread Promedio</h3>
+                    <p id="avg-spread" class="glow-text">0.00%</p>
+                </div>
+                <div class="stat-card tilt-card">
+                    <h3>Mejor Oportunidad</h3>
+                    <p id="max-spread" class="highlight glow-text">0.00%</p>
+                </div>
+            </div>
+
+            <!-- Tabla Principal -->
+            <div class="table-wrapper tilt-card">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>HORA</th>
+                            <th>COMPRA (LOW)</th>
+                            <th>VENTA (HIGH)</th>
+                            <th>SPREAD %</th>
+                            <th>CALIDAD</th>
+                        </tr>
+                    </thead>
+                    <tbody id="log"></tbody>
+                </table>
+            </div>
         </div>
     </div>
     <script src="app.js"></script>
