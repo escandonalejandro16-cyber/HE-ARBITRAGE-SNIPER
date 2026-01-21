@@ -2,8 +2,11 @@ import { ZMQPush } from "./zmq_push.js";
 import { BinanceWS } from "./binance_ws.js";
 import { KrakenWS } from "./kraken_ws.js";
 
+// Configuración: En Docker usaremos la variable de entorno ZMQ_ADDRESS
+const ZMQ_ADDRESS = process.env.ZMQ_ADDRESS || "tcp://127.0.0.1:5556";
+
 async function main() {
-  const zmq = new ZMQPush("tcp://127.0.0.1:5555");
+  const zmq = new ZMQPush(ZMQ_ADDRESS);
   await zmq.connect();
 
   console.log("🚀 Iniciando Ingestor Dual-Exchange...\n");

@@ -13,7 +13,7 @@
     </style>
 </head>
 <body>
-    <h1>📡 Señales en Tiempo Real</h1>
+    <h1>📡 Señales en Tiempo Real (Frontend Container)</h1>
     <table>
         <thead>
             <tr>
@@ -27,7 +27,8 @@
     </table>
 
     <script>
-        const socket = new WebSocket('ws://127.0.0.1:8765');
+        // Conectar al WebSocket del frontend-bridge (puerto 8765 en localhost)
+        const socket = new WebSocket('ws://localhost:8765');
 
         const log = document.getElementById('log');
 
@@ -40,7 +41,6 @@
                 <td class="sell">${data.sell}</td>
                 <td class="spread">${data.spread}%</td>
             `;
-            // Mantener solo las últimas 15 señales
             if (log.rows.length > 15) log.deleteRow(15);
         };
     </script>

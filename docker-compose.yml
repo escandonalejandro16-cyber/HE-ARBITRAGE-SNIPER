@@ -1,81 +1,82 @@
-version: "3.8"
-
-services:
-  # Redis - PUB/SUB y almacenamiento de signals
-  redis:
-    image: redis:7-alpine
-    container_name: arbitrage-redis
-    ports:
-      - "6379:6379"
-    command: redis-server --appendonly yes
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 5s
-      timeout: 3s
-      retries: 5
-    volumes:
-      - redis_data:/data
-    networks:
-      - arbitrage-net
-
-  # Node.js Ingestor - Binance + Kraken WebSocket → ZMQ
-  ingestor:
-    build:
-      context: ./ingestor
-      dockerfile: Dockerfile
-    container_name: arbitrage-ingestor
-    environment:
-      - NODE_ENV=production
-    depends_on:
-      redis:
-        condition: service_healthy
-    networks:
-      - arbitrage-net
-    restart: unless-stopped
-
-  # Python Quant-Engine - ZMQ listener → Strategy → Redis publisher
-  quant-engine:
-    build:
-      context: ./quant-engine
-      dockerfile: Dockerfile
-    container_name: arbitrage-quant-engine
-    environment:
-      - PYTHONUNBUFFERED=1
-      - REDIS_HOST=redis
-      - ZMQ_ADDRESS=tcp://ingestor:5555
-    depends_on:
-      redis:
-        condition: service_healthy
-      ingestor:
-        condition: service_started
-    networks:
-      - arbitrage-net
-    restart: unless-stopped
-
-  # Node.js Frontend - Dashboard web
-  frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
-    container_name: arbitrage-frontend
-    environment:
-      - NODE_ENV=production
-      - PORT=3000
-      - REDIS_HOST=redis
-    ports:
-      - "3000:3000"
-    depends_on:
-      - redis
-      - quant-engine
-    networks:
-      - arbitrage-net
-    restart: unless-stopped
-
+# Red compartida para que los servicios se vean por nombre
 networks:
   arbitrage-net:
     driver: bridge
 
+# Volumen para persistencia de datos de Redis
 volumes:
   redis_data:
     driver: local
 
+services:
+  # 1. Redis: Broker de mensajes
+  redis:
+    image: redis:7-alpine
+    container_name: arbitrage-redis
+    networks:
+      - arbitrage-net
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+
+  # 2. Quant Engine: Cerebro (Python)
+  # Recibe datos por ZMQ (puerto 5556) y publica en Redis
+  quant-engine:
+    build: ./quant-engine
+    container_name: arbitrage-quant-engine
+    networks:
+      - arbitrage-net
+    environment:
+      - PYTHONUNBUFFERED=1
+      - REDIS_HOST=redis
+      # Escucha en todas las interfaces internas del contenedor
+      - ZMQ_ADDRESS=tcp://0.0.0.0:5556
+    depends_on:
+      - redis
+    restart: unless-stopped
+
+  # 3. Ingestor: Recolector de datos (Node.js)
+  # Se conecta a los exchanges y envía datos al Quant Engine
+  ingestor:
+    build: ./ingestor
+    container_name: arbitrage-ingestor
+    networks:
+      - arbitrage-net
+    environment:
+      - NODE_ENV=production
+      # Se conecta al servicio quant-engine
+      - ZMQ_ADDRESS=tcp://quant-engine:5556
+    depends_on:
+      - quant-engine
+    restart: unless-stopped
+
+  # 4. Frontend Bridge: WebSocket Server (Python)
+  # Puente entre Redis y el navegador
+  frontend-bridge:
+    build: ./frontend-bridge
+    container_name: arbitrage-frontend-bridge
+    networks:
+      - arbitrage-net
+    ports:
+      - "8765:8765" # Expone WebSocket al host
+    environment:
+      - REDIS_HOST=redis
+      - PYTHONUNBUFFERED=1
+    depends_on:
+      - redis
+    restart: unless-stopped
+
+  # 5. Frontend: Dashboard Web (React/Node)
+  frontend:
+    build: ./frontend
+    container_name: arbitrage-frontend
+    networks:
+      - arbitrage-net
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - REDIS_HOST=redis
+    restart: unless-stopped

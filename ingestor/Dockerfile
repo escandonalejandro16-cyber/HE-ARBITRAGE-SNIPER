@@ -1,13 +1,26 @@
+# ================================
+# Ingestor Service
+# ================================
+
 FROM node:20-alpine
 
+# Instalar dependencias de compilación para módulos nativos (ZeroMQ)
+RUN apk add --no-cache python3 make g++
+
+# Directorio de trabajo dentro del contenedor
 WORKDIR /app
 
-COPY package*.json ./
+# Copiamos solo dependencias primero (cache)
+COPY package.json package-lock.json ./
 
-RUN npm ci --production
+# Instalación limpia y reproducible
+RUN npm ci --only=production
 
-COPY src/ ./src/
+# Copiamos el código fuente
+COPY src ./src
 
-EXPOSE 3000
+# Variables de entorno (default)
+ENV NODE_ENV=production
 
+# Arranque del ingestor
 CMD ["node", "src/index.js"]

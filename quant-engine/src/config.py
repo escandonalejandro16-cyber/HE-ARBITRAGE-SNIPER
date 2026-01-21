@@ -1,9 +1,12 @@
-# config.py
+import os
 
-ZMQ_ADDRESS = "tcp://127.0.0.1:5555"
-REDIS_HOST = "localhost"
-REDIS_PORT = 6379
-REDIS_CHANNEL = "signals"
+# Configuración de red
+# En Docker, bind a 0.0.0.0 para escuchar conexiones externas (del Ingestor)
+ZMQ_ADDRESS = os.getenv("ZMQ_ADDRESS", "tcp://0.0.0.0:5556")
 
-ARBITRAGE_THRESHOLD = 0.005  # 0.5%
-LOG_LEVEL = "INFO"
+REDIS_HOST = os.getenv("REDIS_HOST", "localhost")
+REDIS_PORT = int(os.getenv("REDIS_PORT", 6379))
+REDIS_CHANNEL = os.getenv("REDIS_CHANNEL", "signals")
+
+ARBITRAGE_THRESHOLD = float(os.getenv("ARBITRAGE_THRESHOLD", 0.005))  # 0.5%
+LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")

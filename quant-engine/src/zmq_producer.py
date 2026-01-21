@@ -1,8 +1,9 @@
 import zmq
 import time
 import random
+import os
 
-ZMQ_ADDRESS = "tcp://127.0.0.1:5555"
+ZMQ_ADDRESS = os.getenv("ZMQ_ADDRESS", "tcp://127.0.0.1:5556")
 
 def main():
     context = zmq.Context()

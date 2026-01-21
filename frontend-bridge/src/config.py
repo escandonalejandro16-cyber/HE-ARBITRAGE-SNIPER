@@ -1,9 +1,9 @@
-# config.py
+import os
 
-ZMQ_ADDRESS = "tcp://127.0.0.1:5555"
-REDIS_HOST = "localhost"
-REDIS_PORT = 6379
-REDIS_CHANNEL = "signals"
+# En Docker: REDIS_HOST=redis
+# En local: fallback automático a 127.0.0.1
+REDIS_HOST = os.getenv("REDIS_HOST", "localhost")
 
-ARBITRAGE_THRESHOLD = 0.005  # 0.5%
-LOG_LEVEL = "INFO"
+REDIS_PORT = int(os.getenv("REDIS_PORT", "6379"))
+
+REDIS_CHANNEL = os.getenv("REDIS_CHANNEL", "arbitrage.signals")
